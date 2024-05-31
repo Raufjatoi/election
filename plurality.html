@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plurality Election System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f5f0ff;
+            color: #333;
+        }
+        header, footer {
+            background-color: #6e5494;
+            color: white;
+            text-align: center;
+            padding: 1em;
+            position: relative;
+        }
+        main {
+            flex: 1;
+            padding: 2em;
+            background-color: #ece4f7;
+        }
+        .profile-pic {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+        }
+        .profile-pic:hover {
+            filter: grayscale(0%);
+        }
+        .candidate, .voter {
+            margin-bottom: 1em;
+        }
+        button {
+            background-color: #6e5494;
+            color: white;
+            border: none;
+            padding: 0.5em 1em;
+            margin-top: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #8a63d2;
+            transform: scale(1.05);
+        }
+        #results-section pre {
+            background-color: #fff;
+            padding: 1em;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .try-runoff-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .try-runoff-button:hover {
+            background-color: #005fa3;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Plurality Election System</h1>
+        <img src="r.PNG" alt="Profile Picture" class="profile-pic">
+    </header>
+    <main>
+        <h2>Enter Candidate Names</h2>
+        <div id="candidates-container">
+            <div class="candidate">
+                <input type="text" placeholder="Candidate Name">
+            </div>
+        </div>
+        <button onclick="addCandidate()">Add Candidate</button>
+        <button onclick="startVoting()">Start Voting</button>
+
+        <div id="voting-section" style="display:none;">
+            <h2>Enter Votes</h2>
+            <div id="voters-container">
+                <div class="voter">
+                    <input type="text" placeholder="Vote">
+                </div>
+            </div>
+            <button onclick="addVoter()">Add Voter</button>
+            <button onclick="calculateResults()">Calculate Results</button>
+        </div>
+
+        <div id="results-section" style="display:none;">
+            <h2>Results</h2>
+            <pre id="results"></pre>
+        </div>
+    </main>
+    <footer>
+        <p>by Rauf</p>
+    </footer>
+
+    <a href="index.html" class="try-runoff-button">Try Runoff System</a>
+
+    <script>
+        let candidates = [];
+        let votes = {};
+
+        function addCandidate() {
+            const container = document.getElementById('candidates-container');
+            const candidateDiv = document.createElement('div');
+            candidateDiv.className = 'candidate';
+            candidateDiv.innerHTML = '<input type="text" placeholder="Candidate Name">';
+            container.appendChild(candidateDiv);
+        }
+
+        function startVoting() {
+            const candidateInputs = document.querySelectorAll('.candidate input');
+            candidates = Array.from(candidateInputs).map(input => input.value).filter(name => name !== "");
+            
+            if (candidates.length < 2) {
+                alert("Please enter at least two candidates.");
+                return;
+            }
+
+            candidates.forEach(candidate => votes[candidate] = 0);
+
+            document.getElementById('voting-section').style.display = 'block';
+        }
+
+        function addVoter() {
+            const container = document.getElementById('voters-container');
+            const voterDiv = document.createElement('div');
+            voterDiv.className = 'voter';
+            voterDiv.innerHTML = '<input type="text" placeholder="Vote">';
+            container.appendChild(voterDiv);
+        }
+
+        function calculateResults() {
+            const voterDivs = document.querySelectorAll('.voter input');
+            const voterVotes = Array.from(voterDivs).map(input => input.value);
+
+            voterVotes.forEach(vote => {
+                if (votes.hasOwnProperty(vote)) {
+                    votes[vote]++;
+                } else {
+                    alert(`Invalid vote: ${vote}`);
+                }
+            });
+
+            const resultsDiv = document.getElementById('results');
+            let maxVotes = 0;
+            let winners = [];
+
+            for (const candidate in votes) {
+                if (votes[candidate] > maxVotes) {
+                    maxVotes = votes[candidate];
+                    winners = [candidate];
+                } else if (votes[candidate] === maxVotes) {
+                    winners.push(candidate);
+                }
+            }
+
+            resultsDiv.innerText = winners.length > 1 ? `Tie between: ${winners.join(", ")}` : `Winner: ${winners[0]}`;
+            document.getElementById('results-section').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

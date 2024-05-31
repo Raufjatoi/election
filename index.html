@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runoff Election System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        header, footer {
+            background-color: #007acc;
+            color: white;
+            text-align: center;
+            padding: 1em;
+            position: relative;
+        }
+        main {
+            flex: 1;
+            padding: 2em;
+            background-color: #e6eff7;
+        }
+        .profile-pic {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+        }
+        .profile-pic:hover {
+            filter: grayscale(0%);
+        }
+        .candidate, .voter {
+            margin-bottom: 1em;
+        }
+        button {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 0.5em 1em;
+            margin-top: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #005fa3;
+            transform: scale(1.05);
+        }
+        #results-section pre {
+            background-color: #fff;
+            padding: 1em;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .try-plurality-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #6e5494;
+            color: white;
+            border: none;
+            padding: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .try-plurality-button:hover {
+            background-color: #8a63d2;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Runoff Election System</h1>
+        <img src="p.jpg" alt="Profile Picture" class="profile-pic">
+    </header>
+    <main>
+        <h2>Enter Candidate Names</h2>
+        <div id="candidates-container">
+            <div class="candidate">
+                <input type="text" placeholder="Candidate Name">
+            </div>
+        </div>
+        <button onclick="addCandidate()">Add Candidate</button>
+        <button onclick="startVoting()">Start Voting</button>
+
+        <div id="voting-section" style="display:none;">
+            <h2>Enter Votes</h2>
+            <div id="voters-container">
+                <div class="voter">
+                    <h3>Voter 1</h3>
+                    <input type="text" placeholder="Rank 1">
+                    <input type="text" placeholder="Rank 2">
+                    <input type="text" placeholder="Rank 3">
+                </div>
+            </div>
+            <button onclick="addVoter()">Add Voter</button>
+            <button onclick="calculateResults()">Calculate Results</button>
+        </div>
+
+        <div id="results-section" style="display:none;">
+            <h2>Results</h2>
+            <pre id="results"></pre>
+        </div>
+    </main>
+    <footer>
+        <p>by Rauf</p>
+    </footer>
+
+    <a href="plurality.html" class="try-plurality-button">Try Plurality System</a>
+
+    <script>
+        let candidates = [];
+        let voters = [];
+
+        function addCandidate() {
+            const container = document.getElementById('candidates-container');
+            const candidateDiv = document.createElement('div');
+            candidateDiv.className = 'candidate';
+            candidateDiv.innerHTML = '<input type="text" placeholder="Candidate Name">';
+            container.appendChild(candidateDiv);
+        }
+
+        function startVoting() {
+            const candidateInputs = document.querySelectorAll('.candidate input');
+            candidates = Array.from(candidateInputs).map(input => input.value).filter(name => name !== "");
+            
+            if (candidates.length < 2) {
+                alert("Please enter at least two candidates.");
+                return;
+            }
+
+            document.getElementById('voting-section').style.display = 'block';
+        }
+
+        function addVoter() {
+            const container = document.getElementById('voters-container');
+            const voterDiv = document.createElement('div');
+            voterDiv.className = 'voter';
+            const voterNumber = container.children.length + 1;
+            voterDiv.innerHTML = `<h3>Voter ${voterNumber}</h3>` + candidates.map((_, index) => `<input type="text" placeholder="Rank ${index + 1}">`).join('');
+            container.appendChild(voterDiv);
+        }
+
+        function calculateResults() {
+            const voterDivs = document.querySelectorAll('.voter');
+            voters = Array.from(voterDivs).map(div => {
+                const inputs = div.querySelectorAll('input');
+                return Array.from(inputs).map(input => input.value);
+            });
+
+            const maxCandidates = candidates.length;
+            let votes = candidates.map(candidate => ({ name: candidate, votes: 0, eliminated: false }));
+
+            while (true) {
+                // Reset vote counts
+                votes.forEach(candidate => candidate.votes = 0);
+
+                // Tabulate votes
+                voters.forEach(voter => {
+                    for (let rank = 0; rank < maxCandidates; rank++) {
+                        const candidateName = voter[rank];
+                        const candidate = votes.find(c => c.name === candidateName);
+                        if (candidate && !candidate.eliminated) {
+                            candidate.votes++;
+                            break;
+                        }
+                    }
+                });
+
+                // Check for winner
+                const totalVotes = voters.length;
+                const majority = Math.floor(totalVotes / 2) + 1;
+                let winner = votes.find(candidate => candidate.votes >= majority);
+                if (winner) {
+                    document.getElementById('results').innerText = `Winner: ${winner.name}`;
+                    document.getElementById('results-section').style.display = 'block';
+                    return;
+                }
+
+                // Find candidate with minimum votes
+                let minVotes = Math.min(...votes.filter(candidate => !candidate.eliminated).map(candidate => candidate.votes));
+
+                // Check for tie
+                let tie = votes.filter(candidate => !candidate.eliminated && candidate.votes === minVotes).length === votes.filter(candidate => !candidate.eliminated).length;
+                if (tie) {
+                    let tiedCandidates = votes.filter(candidate => !candidate.eliminated).map(candidate => candidate.name).join(", ");
+                    document.getElementById('results').innerText = `Tie between: ${tiedCandidates}`;
+                    document.getElementById('results-section').style.display = 'block';
+                    return;
+                }
+
+                // Eliminate candidate(s) with minimum votes
+                votes.filter(candidate => candidate.votes === minVotes).forEach(candidate => candidate.eliminated = true);
+            }
+        }
+    </script>
+</body>
+</html>
